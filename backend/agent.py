@@ -47,7 +47,7 @@ TRAVEL_KEYWORDS = {
     "clima", "ruta", "mapa", "mapas", "ubicacion", "ubicado", "queda", "playa",
     "museo", "restaurante", "comida", "seguridad", "transporte", "aeropuerto",
     "tren", "bus", "empacar", "temporada", "vacaciones", "imagenes", "fotos",
-    "lugares", "ciudades", "google maps", "donde esta", "donde queda",
+    "lugares", "ciudades", "google maps", "donde esta", "donde queda", "donde se ubica",
 }
 
 KNOWN_DESTINATIONS = {
@@ -64,7 +64,7 @@ KNOWN_DESTINATIONS = {
     "vietnam", "indonesia", "philippines", "australia", "new zealand",
     "south africa", "kenya", "tanzania", "namibia", "georgia", "armenia",
     "albania", "montenegro", "slovenia", "croatia", "estonia", "latvia",
-    "lithuania", "nepal", "bhutan", "uzbekistan", "kazakhstan",
+    "lithuania", "nepal", "bhutan", "uzbekistan", "kazakhstan", "jordania", "jordan",
 }
 
 IMAGE_REQUEST_TERMS = ("imagen", "imagenes", "foto", "fotos", "galeria", "gallery", "image", "images", "photo", "photos")
@@ -457,7 +457,7 @@ def _extract_destination_from_location_question(text: str) -> str | None:
     patterns = [
         r"(?:where\s+is|where's)\s+(.+?)(?:\s+located|\s+situated|\?|$)",
         r"(?:location\s+of|map\s+of|google\s+maps\s+of)\s+(.+?)(?:\?|$)",
-        r"(?:donde\s+esta|dónde\s+está|donde\s+queda|dónde\s+queda|ubicacion\s+de|ubicación\s+de)\s+(.+?)(?:\?|$)",
+        r"(?:donde\s+esta|dónde\s+está|donde\s+queda|dónde\s+queda|ubicacion\s+de|ubicación\s+de|donde\s+se\s+ubica|dónde\s+se\s+ubica)\s+(.+?)(?:\?|$)",
         r"(?:donde\s+esta\s+ubicado|dónde\s+está\s+ubicado|donde\s+esta\s+ubicada|dónde\s+está\s+ubicada)\s+(.+?)(?:\?|$)",
     ]
     for pattern in patterns:
