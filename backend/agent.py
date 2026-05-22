@@ -609,4 +609,5 @@ def run_agent(session_id: str, user_message: str) -> dict:
         "tool_used":  len(tools_used) > 0,
         "tools_used": tools_used,
         "tool_name":  tools_used[0] if tools_used else None,
+        "destination": destination_for_location
     }

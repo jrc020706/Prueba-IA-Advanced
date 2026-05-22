@@ -59,6 +59,7 @@ class ChatResponse(BaseModel):
     tool_name: str | None
     tools_used: list[str]
     mode: str
+    destination: str | None = None
 
 
 class TTSRequest(BaseModel):
@@ -98,6 +99,7 @@ async def chat(request: ChatRequest):
             tool_name=result["tool_name"],
             tools_used=result["tools_used"],
             mode=request.mode,
+            destination=result.get("destination")
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Agent error: {exc}")

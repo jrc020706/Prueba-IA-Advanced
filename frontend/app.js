@@ -88,6 +88,11 @@ const DESTINATION_IMAGES = {
     'https://images.unsplash.com/photo-1543783207-ec64e4d95325?auto=format&fit=crop&w=700&q=80',
     'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=700&q=80',
   ],
+  jordania: [
+    'https://images.unsplash.com/photo-1547234935-80c7145ec969?auto=format&fit=crop&w=700&q=80',
+    'https://images.unsplash.com/photo-1501233339699-2051864573af?auto=format&fit=crop&w=700&q=80',
+    'https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=700&q=80',
+  ],
 };
 
 const COMMON_DESTINATIONS = [
@@ -103,7 +108,7 @@ const COMMON_DESTINATIONS = [
   'bután', 'uzbekistan', 'uzbekistán', 'kazakhstan', 'kazajistan', 'kazajistán',
   'tokyo', 'tokio', 'kyoto', 'osaka', 'paris', 'london', 'londres', 'madrid',
   'barcelona', 'rome', 'roma', 'venice', 'venecia', 'cartagena', 'bogota',
-  'bogotá', 'medellin', 'medellín', 'costa rica', 'dubai',
+  'bogotá', 'medellin', 'medellín', 'costa rica', 'dubai', 'jordania', 'jordan',
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -648,7 +653,8 @@ async function sendMessage() {
     }
 
     removeTyping();
-    appendBotMessage(data.text, data.tool_used, data.tool_name, audioBlob, buildVisualContext(text), audioFailed);
+    const visualDestination = data.destination || text;
+    appendBotMessage(data.text, data.tool_used, data.tool_name, audioBlob, buildVisualContext(visualDestination), audioFailed);
 
   } catch (err) {
     removeTyping();
