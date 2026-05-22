@@ -99,7 +99,7 @@ def setup_rag() -> None:
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
         chunks = splitter.create_documents([raw_text], metadatas=[{"source": RAG_URL}])
 
-        embeddings = GoogleGenerativeAIEmbeddings(model="text-embedding-004", google_api_key=GEMINI_API_KEY)
+        embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=GEMINI_API_KEY)
         vectorstore = FAISS.from_documents(chunks, embeddings)
         _rag_retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
         print(f"[RAG] ✅ Indexed {len(chunks)} chunks from {RAG_URL}")
