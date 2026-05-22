@@ -401,7 +401,7 @@ INSTRUCTIONS:
 # Agent — LangGraph ReAct (modern replacement for AgentExecutor)
 # ---------------------------------------------------------------------------
 _tools = [web_search, currency_converter, travel_knowledge, place_image_search]
-_llm   = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=GEMINI_API_KEY, temperature=0.7)
+_llm   = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", google_api_key=GEMINI_API_KEY, temperature=0.7)
 _memory = MemorySaver()
 
 
