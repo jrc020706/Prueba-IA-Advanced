@@ -47,7 +47,7 @@ TRAVEL_KEYWORDS = {
     "clima", "ruta", "mapa", "mapas", "ubicacion", "ubicado", "queda", "playa",
     "museo", "restaurante", "comida", "seguridad", "transporte", "aeropuerto",
     "tren", "bus", "empacar", "temporada", "vacaciones", "imagenes", "fotos",
-    "lugares", "ciudades", "google maps", "donde esta", "donde queda", "donde se ubica",
+    "lugares", "ciudades", "google maps", "donde esta", "donde queda", "donde se ubica", "llegar", "arrive", "how to", "como llegar",
 }
 
 KNOWN_DESTINATIONS = {
@@ -64,7 +64,7 @@ KNOWN_DESTINATIONS = {
     "vietnam", "indonesia", "philippines", "australia", "new zealand",
     "south africa", "kenya", "tanzania", "namibia", "georgia", "armenia",
     "albania", "montenegro", "slovenia", "croatia", "estonia", "latvia",
-    "lithuania", "nepal", "bhutan", "uzbekistan", "kazakhstan", "jordania", "jordan",
+    "lithuania", "nepal", "bhutan", "uzbekistan", "kazakhstan", "jordania", "jordan", "venice", "venezia", "italy", "italia",
 }
 
 IMAGE_REQUEST_TERMS = ("imagen", "imagenes", "foto", "fotos", "galeria", "gallery", "image", "images", "photo", "photos")
