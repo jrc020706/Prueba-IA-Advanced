@@ -395,14 +395,16 @@ INSTRUCTIONS:
 
 7. PROACTIVENESS: After answering, always suggest the logical next step: visa requirements, best season to visit, packing tips, local customs, must-try dishes, or how to get around. Make users feel excited and confident about their journey.
 
-8. VISUAL UI SUPPORT: The frontend can display Google Maps embeds and image galleries. If the user asks to see photos/images or a map/location of a travel destination, do not say you cannot show them. Briefly answer the travel question and mention that the map or gallery is shown below in the interface."""
+8. TOOL CALLING: You have access to specialized tools. When you use a tool, you MUST output the tool call in the standard JSON format provided by the interface. DO NOT use XML-like tags like <function> or <tool>. Use the provided tools (web_search, currency_converter, etc.) whenever you need real-world data to maintain accuracy.
+
+9. VISUAL UI SUPPORT: The frontend can display Google Maps embeds and image galleries. If the user asks to see photos/images or a map/location of a travel destination, do not say you cannot show them. Briefly answer the travel question and mention that the map or gallery is shown below in the interface."""
 
 
 # ---------------------------------------------------------------------------
 # Agent — LangGraph ReAct (modern replacement for AgentExecutor)
 # ---------------------------------------------------------------------------
 _tools = [web_search, currency_converter, travel_knowledge, place_image_search]
-_llm   = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=os.getenv("GROQ_API_KEY"), temperature=0.7)
+_llm   = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=os.getenv("GROQ_API_KEY"), temperature=0)
 _memory = MemorySaver()
 
 
