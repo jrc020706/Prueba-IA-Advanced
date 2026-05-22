@@ -5,6 +5,7 @@ langchain-google-genai
 langchain-community
 google-genai
 groq
+langchain-groq
 duckduckgo-search
 python-dotenv
 pydantic
