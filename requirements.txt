@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+langchain
+langchain-google-genai
+langchain-community
+google-genai
+groq
+duckduckgo-search
+python-dotenv
+pydantic
+faiss-cpu
+tiktoken
+python-multipart
+beautifulsoup4
+requests
+lxml

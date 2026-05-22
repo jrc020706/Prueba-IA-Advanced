@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ViajeBot — AI Travel Assistant</title>
+  <meta name="description" content="ViajeBot is your AI-powered travel assistant for Colombia and international destinations. Get real-time travel advice, currency conversion, and personalized trip planning." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Animated background particles -->
+  <div class="bg-particles" aria-hidden="true">
+    <span></span><span></span><span></span>
+    <span></span><span></span><span></span>
+  </div>
+
+  <div class="app-wrapper">
+
+    <!-- ── HEADER ────────────────────────────────────── -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-icon" aria-hidden="true">✈️</div>
+        <div class="brand-info">
+          <h1 class="brand-name">ViajeBot</h1>
+          <p class="brand-tagline">AI Travel Assistant · Colombia &amp; World</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <!-- Mode toggle: Text / Voice -->
+        <div class="mode-toggle" role="group" aria-label="Response mode selector">
+          <button id="btn-text" class="mode-btn active" data-mode="text" aria-pressed="true">
+            <span class="mode-icon">💬</span>
+            <span>Text</span>
+          </button>
+          <button id="btn-voice" class="mode-btn" data-mode="voice" aria-pressed="false">
+            <span class="mode-icon">🔊</span>
+            <span>Voice</span>
+          </button>
+        </div>
+
+        <!-- Status indicator -->
+        <button id="theme-toggle" class="theme-toggle" aria-label="Switch to light mode" title="Theme">
+          <span aria-hidden="true">☀️</span>
+        </button>
+        <div class="status-dot" id="status-dot" title="Online"></div>
+      </div>
+    </header>
+
+    <div class="content-shell">
+      <aside class="explore-panel" aria-label="Recommended travel places">
+        <div class="panel-heading">
+          <span class="panel-kicker">Travel gallery</span>
+          <h2>Best Places to Visit</h2>
+        </div>
+        <div class="destination-grid" id="destination-grid">
+          <button class="destination-card" data-prompt="Dame un itinerario para visitar Cartagena, Colombia">
+            <img src="https://images.unsplash.com/photo-1583531352515-8884af319dc1?auto=format&fit=crop&w=700&q=80" alt="Cartagena, Colombia" />
+            <span class="destination-copy">
+              <strong>Cartagena</strong>
+              <small>Murallas coloniales, Caribe y gastronomia costera.</small>
+            </span>
+          </button>
+          <button class="destination-card" data-prompt="Que puedo visitar en Tokio y donde queda en Google Maps">
+            <img src="https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=700&q=80" alt="Tokyo, Japan" />
+            <span class="destination-copy">
+              <strong>Tokio</strong>
+              <small>Templos, barrios neon, comida y cultura urbana.</small>
+            </span>
+          </button>
+          <button class="destination-card" data-prompt="Mejores lugares para visitar en Paris">
+            <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=700&q=80" alt="Paris, France" />
+            <span class="destination-copy">
+              <strong>Paris</strong>
+              <small>Museos, cafes, arquitectura y paseos junto al Sena.</small>
+            </span>
+          </button>
+          <button class="destination-card" data-prompt="Quiero planear un viaje a Costa Rica">
+            <img src="https://images.unsplash.com/photo-1518182170546-07661fd94144?auto=format&fit=crop&w=700&q=80" alt="Costa Rica rainforest" />
+            <span class="destination-copy">
+              <strong>Costa Rica</strong>
+              <small>Selva, volcanes, playas y turismo de naturaleza.</small>
+            </span>
+          </button>
+          <button class="destination-card" data-prompt="Donde queda Kyoto en Google Maps y que puedo visitar">
+            <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=700&q=80" alt="Kyoto, Japan" />
+            <span class="destination-copy">
+              <strong>Kyoto</strong>
+              <small>Templos, jardines, calles historicas y cultura japonesa.</small>
+            </span>
+          </button>
+          <button class="destination-card" data-prompt="Mejores lugares para visitar en Roma">
+            <img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=700&q=80" alt="Rome, Italy" />
+            <span class="destination-copy">
+              <strong>Roma</strong>
+              <small>Historia antigua, plazas, arte y cocina italiana.</small>
+            </span>
+          </button>
+        </div>
+      </aside>
+
+      <section class="chat-panel" aria-label="Travel chat">
+        <!-- ── CHAT AREA ──────────────────────────────────── -->
+        <main class="chat-area" id="chat-area" role="log" aria-label="Conversation history" aria-live="polite">
+
+      <!-- Welcome message (initial state) -->
+      <div class="welcome-card" id="welcome-card">
+        <div class="welcome-globe" aria-hidden="true">🌍</div>
+        <h2 class="welcome-title">¡Hola, viajero! 👋</h2>
+        <p class="welcome-text">
+          I'm ViajeBot, your AI travel companion. Ask me about destinations in
+          <strong>Colombia</strong> or anywhere in the world — flights, hotels,
+          visas, currency, and more.
+        </p>
+        <div class="quick-chips">
+          <button class="chip" id="chip-1">🏖️ Best beaches in Colombia</button>
+          <button class="chip" id="chip-2">💱 USD to COP rate</button>
+          <button class="chip" id="chip-3">🗺️ Medellín itinerary 3 days</button>
+          <button class="chip" id="chip-4">✈️ Cheapest destinations from Bogotá</button>
+        </div>
+      </div>
+
+      <!-- Messages will be appended here by app.js -->
+        </main>
+
+        <!-- ── INPUT BAR ──────────────────────────────────── -->
+        <footer class="input-bar">
+          <div id="voice-status" class="voice-status" role="status" aria-live="polite"></div>
+          <div class="composer-row">
+            <textarea
+              id="user-input"
+              class="message-input"
+              placeholder="Ask me about your next adventure... 🗺️"
+              rows="1"
+              maxlength="2000"
+              aria-label="Type your travel question"
+            ></textarea>
+            <button id="mic-btn" class="mic-btn" aria-label="Dictate message" title="Dictate">
+              <span aria-hidden="true">🎙️</span>
+            </button>
+            <button id="send-btn" class="send-btn" aria-label="Send message" title="Send">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </footer>
+      </section>
+    </div>
+
+  </div><!-- /.app-wrapper -->
+
+  <script src="app.js"></script>
+</body>
+</html>

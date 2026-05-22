@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: viagebot-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+
+  - type: static
+    name: viagebot-frontend
+    staticPublishPath: frontend
+    buildCommand: npm run build || true
