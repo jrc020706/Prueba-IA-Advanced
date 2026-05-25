@@ -15,5 +15,6 @@ python-multipart
 beautifulsoup4
 requests
 lxml
-langchain-openai
-openai
+langchain-google-genai
+langchain-groq
+gTTS
