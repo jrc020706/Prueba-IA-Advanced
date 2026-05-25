@@ -12,9 +12,10 @@ import io
 from dotenv import load_dotenv
 
 from fastapi import FastAPI, HTTPException, File, UploadFile
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import groq
+import openai
 
 load_dotenv()
 
@@ -108,36 +109,46 @@ async def chat(request: ChatRequest):
 @app.post("/tts")
 async def text_to_speech(request: TTSRequest):
     """
-    (Disabled) Convert text to speech using OpenAI TTS.
-    OpenAI has been removed from this backend.
+    Convert text to speech using OpenAI TTS.
     """
-    raise HTTPException(
-        status_code=503, 
-        detail="TTS service is currently unavailable as OpenAI has been removed. Setup a new TTS provider."
-    )
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if not openai_key or openai_key == "your_openai_api_key_here":
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY is not configured.")
+        
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=openai_key)
+        response = client.audio.speech.create(
+            model="tts-1",
+            voice="alloy",
+            input=request.text,
+        )
+        # Return the audio as a streaming response
+        return StreamingResponse(io.BytesIO(response.content), media_type="audio/mpeg")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"TTS error: {exc}")
 
 
 @app.post("/transcribe")
 async def transcribe_audio(file: UploadFile = File(...)):
     """
-    Transcribe audio file using Groq Whisper (model: whisper-large-v3).
+    Transcribe audio file using OpenAI Whisper.
     """
-    groq_key = os.getenv("GROQ_API_KEY")
-    if not groq_key or groq_key == "your_groq_api_key_here":
-        raise HTTPException(status_code=500, detail="GROQ_API_KEY is not configured.")
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if not openai_key or openai_key == "your_openai_api_key_here":
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY is not configured.")
         
     try:
-        client = groq.Groq(api_key=groq_key)
+        from openai import OpenAI
+        client = OpenAI(api_key=openai_key)
         content = await file.read()
         
-        # Groq expects a file-like object with a name attribute
         audio_file = io.BytesIO(content)
         audio_file.name = getattr(file, "filename", "audio.wav")
         
         transcription = client.audio.transcriptions.create(
             file=audio_file,
-            model="whisper-large-v3",
-            response_format="json",
+            model="whisper-1",
         )
         return {"text": transcription.text}
     except Exception as exc:

@@ -10,8 +10,8 @@ import requests
 from urllib.parse import unquote
 from dotenv import load_dotenv
 
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, ToolMessage
 
@@ -100,7 +100,7 @@ def setup_rag() -> None:
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
         chunks = splitter.create_documents([raw_text], metadatas=[{"source": RAG_URL}])
 
-        embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=GEMINI_API_KEY)
+        embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=os.getenv("OPENAI_API_KEY"))
         vectorstore = FAISS.from_documents(chunks, embeddings)
         _rag_retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
         print(f"[RAG] ✅ Indexed {len(chunks)} chunks from {RAG_URL}")
@@ -402,7 +402,7 @@ INSTRUCTIONS:
 # Agent — LangGraph ReAct (modern replacement for AgentExecutor)
 # ---------------------------------------------------------------------------
 _tools = [web_search, currency_converter, travel_knowledge, place_image_search]
-_llm   = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=os.getenv("GROQ_API_KEY"), temperature=0.1)
+_llm   = ChatOpenAI(model="gpt-4o", openai_api_key=os.getenv("OPENAI_API_KEY"), temperature=0.7)
 _memory = MemorySaver()
 
 

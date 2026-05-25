@@ -15,3 +15,5 @@ python-multipart
 beautifulsoup4
 requests
 lxml
+langchain-openai
+openai
