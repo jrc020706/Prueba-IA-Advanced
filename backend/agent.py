@@ -51,6 +51,8 @@ TRAVEL_KEYWORDS = {
     "museo", "restaurante", "comida", "seguridad", "transporte", "aeropuerto",
     "tren", "bus", "empacar", "temporada", "vacaciones", "imagenes", "fotos",
     "lugares", "ciudades", "google maps", "donde esta", "donde queda", "donde se ubica", "llegar", "arrive", "how to", "como llegar",
+    "asia", "africa", "europe", "america", "center america", "central america", "south america", "north america", "oceania", "middle east",
+    "europa", "sudamerica", "suramerica", "centroamerica", "norteamerica", "oceania", "medio oriente",
 }
 
 KNOWN_DESTINATIONS = {
