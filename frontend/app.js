@@ -686,16 +686,21 @@ if (chatFab && chatPopup) {
 document.querySelectorAll('.destination-card').forEach(card => {
   card.addEventListener('click', () => {
     const prompt = card.getAttribute('data-prompt');
-    if (prompt) {
-      document.getElementById('user-input').value = prompt;
-      
-      // Open popup if closed
-      if (chatFab && !chatFab.classList.contains('is-open')) {
-        chatFab.click();
-      }
-      
-      // Trigger send
-      setTimeout(() => document.getElementById('send-btn').click(), 400);
+    if (!prompt) return;
+
+    inputEl.value = prompt;
+    inputEl.dispatchEvent(new Event('input'));
+
+    if (chatFab && !chatFab.classList.contains('is-open')) {
+      chatFab.click();
     }
+
+    setTimeout(() => {
+      if (inputEl.value.trim()) {
+        sendMessage();
+        inputEl.value = '';
+        inputEl.style.height = 'auto';
+      }
+    }, 250);
   });
 });

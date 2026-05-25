@@ -3,7 +3,7 @@ ViajeBot — FastAPI Application
 Endpoints:
   GET  /health        — health check
   POST /chat          — send message to agent, returns text + tool info
-  POST /tts           — (Disabled) convert text to speech via OpenAI TTS
+  POST /tts           — convert text to speech via gTTS (Google Text-to-Speech)
   POST /transcribe    — transcribe audio via Groq Whisper v3
 """
 
