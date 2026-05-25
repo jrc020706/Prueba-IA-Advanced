@@ -402,7 +402,7 @@ INSTRUCTIONS:
 # Agent — LangGraph ReAct (modern replacement for AgentExecutor)
 # ---------------------------------------------------------------------------
 _tools = [web_search, currency_converter, travel_knowledge, place_image_search]
-_llm   = ChatGroq(model="llama-3.3-70b-versatile", groq_api_key=os.getenv("GROQ_API_KEY"), temperature=0.1)
+_llm   = ChatGroq(model="llama-3.1-8b-instant", groq_api_key=os.getenv("GROQ_API_KEY"), temperature=0.1)
 _memory = MemorySaver()
 
 
