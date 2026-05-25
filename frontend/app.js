@@ -73,6 +73,10 @@ const COMMON_DESTINATIONS = [
   'tokyo', 'tokio', 'kyoto', 'osaka', 'paris', 'london', 'londres', 'madrid',
   'barcelona', 'rome', 'roma', 'venice', 'venecia', 'cartagena', 'bogota',
   'bogotá', 'medellin', 'medellín', 'costa rica', 'dubai', 'jordania', 'jordan',
+  'bali', 'santorini', 'marrakech', 'bangkok', 'amsterdam', 'cape town',
+  'machu picchu', 'new york', 'nueva york', 'rio de janeiro', 'rio',
+  'buenos aires', 'lima', 'cusco', 'cancun', 'cancún', 'mexico', 'méxico',
+  'miami', 'panama', 'panamá', 'peru', 'perú', 'chile', 'argentina', 'brasil',
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -169,9 +173,9 @@ function imageSetFor(destination) {
   const normalized = normalizeText(destination);
   if (DESTINATION_IMAGES[normalized]) return DESTINATION_IMAGES[normalized];
   return [
-    `https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=80`,
-    `https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=700&q=80`,
-    `https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=700&q=80`,
+    'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=700&q=80',
+    'https://images.unsplash.com/photo-1503220317375-aaad61436b1b?auto=format&fit=crop&w=700&q=80',
+    'https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=700&q=80',
   ];
 }
 
@@ -316,6 +320,11 @@ function setupSpeechRecognition() {
 async function toggleSpeechRecognition() {
   setMode('voice');
   
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    setVoiceStatus('Tu navegador no soporta grabacion de audio o estas en una conexion no segura (HTTP).', 'error');
+    return;
+  }
+
   if (isListening) {
     stopRecording();
     return;
@@ -327,12 +336,10 @@ async function toggleSpeechRecognition() {
   } catch (error) {
     isListening = false;
     micBtn.classList.remove('listening');
-    setVoiceStatus(
-      error?.name === 'NotAllowedError'
-        ? 'Permiso de microfono bloqueado. Activalo en el navegador y vuelve a intentar.'
-        : 'No pude activar el microfono. Revisa permisos o disponibilidad del dispositivo.',
-      'error'
-    );
+    let msg = 'No pude activar el microfono. Revisa permisos.';
+    if (error?.name === 'NotAllowedError') msg = 'Permiso de microfono denegado. Activalo en el navegador.';
+    if (error?.name === 'NotFoundError') msg = 'No se encontro ningun microfono conectado.';
+    setVoiceStatus(msg, 'error');
   }
 }
 
