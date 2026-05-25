@@ -11,16 +11,16 @@ Follow these steps to get the project running on your local machine.
 ### 1. Environment Configuration
 Create your environment file from the template:
 ```bash
-cp .env.example backend/.env
+cp .env.example .env
 ```
 > [!IMPORTANT]
-> Edit `backend/.env` and add your `OPENAI_API_KEY`.
+> Edit `.env` and add your `GROQ_API_KEY` and `GEMINI_API_KEY`.
 
 ### 2. Create and Activate Virtual Environment (Venv)
 Since Linux (Debian/Ubuntu) manages Python packages externally, **you must use a virtual environment**:
 ```bash
 # Go to project root
-cd ~/Escritorio/voice\ agent-prueba
+cd Prueba-IA-Advanced
 
 # Create the environment
 python3 -m venv .venv
@@ -55,6 +55,17 @@ Now visit: **[http://localhost:3000](http://localhost:3000)**
 
 ---
 
+## 🏗️ Technical Architecture (New Stack)
+
+The system has been modernized to use high-performance, low-latency providers:
+
+- **LLM**: [Groq](https://groq.com/) using `llama-3.3-70b-versatile` for near-instant responses.
+- **Embeddings (RAG)**: [Google Gemini](https://ai.google.dev/) (`models/gemini-embedding-001`).
+- **Voice Response (TTS)**: `gTTS` (Google Text-to-Speech) — Free, robust, and natural in Spanish.
+- **Voice Transcription (STT)**: [Groq Whisper](https://groq.com/) (`whisper-large-v3`) for ultra-fast audio-to-text.
+
+---
+
 ## 🌍 Deployment
 
 This project is deployed on Render.
@@ -63,10 +74,6 @@ This project is deployed on Render.
 - **Frontend public URL:** `https://viagebot-frontend.onrender.com`
 - **Health check:** `https://viagebot-backend.onrender.com/health`
 
-> Note: The API root path `/` is not defined in this app, so visiting `https://viagebot-backend.onrender.com/` will return `404 Not Found`. Use `/health` or `/chat` instead.
-
-If you want to deploy the frontend as a separate Render Static Site, connect your repository to Render and set the root directory to `frontend`.
-
 ---
 
 ## 🛠️ Tools & Use Case
@@ -74,21 +81,23 @@ If you want to deploy the frontend as a separate Render Static Site, connect you
 ViajeBot is configured as an **Expert Travel Advisor**. It uses the following tools autonomously:
 
 1.  **🔍 Web Search (DuckDuckGo)**: For real-time flight prices, weather, and visa requirements.
-2.  **💱 Currency Converter**: Converts any currency (USD, EUR, etc.) to COP or others using live rates.
+2.  **💱 Currency Converter**: Converts any currency (USD, EUR, etc.) using live rates.
 3.  **📚 Travel Knowledge (RAG)**: Uses indexed knowledge from Wikipedia about tourism in Colombia.
+4.  **🗺️ Visual Context**: Automatically provides Google Maps and image galleries for destinations.
 
 ### Example Prompts
 - *"Best places to visit in Cartagena"* (Uses RAG/Knowledge)
-- *"How many COP is 100 USD?"* (Uses Currency Converter)
-- *"Check cheap flights from Bogota to Madrid for next month"* (Uses Web Search)
+- *"How many pesos is 100 USD?"* (Uses Currency Converter)
+- *"Show me location of Paris"* (Triggers Map and Gallery)
+- *"Quiero viajar a San Andres, buscar imagenes"* (Triggers Gallery)
 
 ---
 
 ## 📂 Project Structure
 ```
-voice-agent-prueba/
+Prueba-IA-Advanced/
 ├── backend/
-│   ├── main.py         # FastAPI Endpoints (/chat, /tts)
+│   ├── main.py         # FastAPI Endpoints (/chat, /tts, /transcribe)
 │   ├── agent.py        # LangGraph AI Agent & Tools
 │   └── .env            # API keys (Protected)
 ├── frontend/
@@ -104,10 +113,10 @@ voice-agent-prueba/
 ## ⚠️ Troubleshooting (Common Fixes)
 
 **Error: `Address already in use (Port 8000)`**
-If you get this error when starting the backend, run:
-```bash
-sudo fuser -k 8000/tcp
-```
+Run: `sudo fuser -k 8000/tcp`
 
-**Voice Mode not working?**
-Ensure your `OPENAI_API_KEY` is correct in `backend/.env`. The system uses OpenAI TTS (`tts-1`) for high-quality voice responses.
+**Map showing wrong location?**
+Ensure your query includes the city or country name clearly. The agent uses improved NLP to extract destinations, but phrases like "en google maps" depend on the previous context.
+
+**Images not loading?**
+The system uses DuckDuckGo Images. Ensure you have an active internet connection. Multiple images are now fetched more robustly from various sources.

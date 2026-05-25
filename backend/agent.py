@@ -209,7 +209,7 @@ def search_destination_images(query: str, max_results: int = 6) -> list[str]:
     if not cleaned:
         return []
 
-    search_query = f"{cleaned} travel destination landmark"
+    search_query = f"{cleaned} tourism city landmark"
     try:
         from duckduckgo_search import DDGS
         with DDGS() as ddgs:
@@ -456,8 +456,8 @@ def _extract_destination_from_location_question(text: str) -> str | None:
     normalized = text.strip()
     patterns = [
         r"(?:where\s+is|where's)\s+(.+?)(?:\s+located|\s+situated|\?|$)",
-        r"(?:location\s+of|map\s+of|google\s+maps\s+of)\s+(.+?)(?:\?|$)",
-        r"(?:donde\s+esta|dónde\s+está|donde\s+queda|dónde\s+queda|ubicacion\s+de|ubicación\s+de|donde\s+se\s+ubica|dónde\s+se\s+ubica)\s+(.+?)(?:\?|$)",
+        r"(?:location\s+of|map\s+of|google\s+maps\s+of|photos\s+of|images\s+of)\s+(.+?)(?:\?|$)",
+        r"(?:donde\s+esta|dónde\s+está|donde\s+queda|dónde\s+queda|ubicacion\s+de|ubicación\s+de|donde\s+se\s+ubica|dónde\s+se\s+ubica|visitar|viaje\s+a)\s+(.+?)(?:\?|$)",
         r"(?:donde\s+esta\s+ubicado|dónde\s+está\s+ubicado|donde\s+esta\s+ubicada|dónde\s+está\s+ubicada)\s+(.+?)(?:\?|$)",
     ]
     for pattern in patterns:
