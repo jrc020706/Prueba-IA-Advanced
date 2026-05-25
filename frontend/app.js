@@ -28,72 +28,36 @@ const voiceStatus = document.getElementById('voice-status');
 const themeToggle = document.getElementById('theme-toggle');
 
 const DESTINATION_IMAGES = {
-  tokio: [
-    'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=700&q=80',
-  ],
-  tokyo: [
-    'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=700&q=80',
-  ],
-  cartagena: [
-    'https://images.unsplash.com/photo-1583531352515-8884af319dc1?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1624806992066-5ffcf7ca186b?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1600195077909-46e573870d99?auto=format&fit=crop&w=700&q=80',
-  ],
-  paris: [
-    'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1522093007474-d86e9bf7ba6f?auto=format&fit=crop&w=700&q=80',
-  ],
-  medellin: [
-    'https://images.unsplash.com/photo-1581781870027-04212e231e96?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1534269222346-5a896154c41d?auto=format&fit=crop&w=700&q=80',
-  ],
-  bogota: [
-    'https://images.unsplash.com/photo-1568632234157-ce7aecd03d0d?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1596120236172-231999844ade?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1599708153386-62bf3f03555f?auto=format&fit=crop&w=700&q=80',
-  ],
-  "costa rica": [
-    'https://images.unsplash.com/photo-1518182170546-07661fd94144?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1508726096737-5ac7ca26345d?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=700&q=80',
-  ],
-  kyoto: [
-    'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=700&q=80',
-  ],
-  roma: [
-    'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1529154036614-a60975f5c760?auto=format&fit=crop&w=700&q=80',
-  ],
-  rome: [
-    'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1529154036614-a60975f5c760?auto=format&fit=crop&w=700&q=80',
-  ],
-  espana: [
-    'https://images.unsplash.com/photo-1509840841025-9088ba78a826?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1543783207-ec64e4d95325?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=700&q=80',
-  ],
-  spain: [
-    'https://images.unsplash.com/photo-1509840841025-9088ba78a826?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1543783207-ec64e4d95325?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=700&q=80',
-  ],
-  jordania: [
-    'https://images.unsplash.com/photo-1547234935-80c7145ec969?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1501233339699-2051864573af?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=700&q=80',
-  ],
-};
+  tokio: ['https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=700&q=80'],
+  tokyo: ['https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=700&q=80'],
+  kyoto: ['https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=700&q=80'],
+  cartagena: ['https://images.unsplash.com/photo-1583531352515-8884af319dc1?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1624806992066-5ffcf7ca186b?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1600195077909-46e573870d99?auto=format&fit=crop&w=700&q=80'],
+  medellin: ['https://images.unsplash.com/photo-1581781870027-04212e231e96?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1534269222346-5a896154c41d?auto=format&fit=crop&w=700&q=80'],
+  bogota: ['https://images.unsplash.com/photo-1568632234157-ce7aecd03d0d?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1596120236172-231999844ade?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1599708153386-62bf3f03555f?auto=format&fit=crop&w=700&q=80'],
+  paris: ['https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1522093007474-d86e9bf7ba6f?auto=format&fit=crop&w=700&q=80'],
+  "costa rica": ['https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1585208798174-6cedd86e019a?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1598881034666-a85c6f5c3e22?auto=format&fit=crop&w=700&q=80'],
+  roma: ['https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1529154036614-a60975f5c760?auto=format&fit=crop&w=700&q=80'],
+  rome: ['https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1529154036614-a60975f5c760?auto=format&fit=crop&w=700&q=80'],
+  venecia: ['https://images.unsplash.com/photo-1514890547357-a9ee288728e0?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1534113414509-0eec2bfb493f?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=700&q=80'],
+  venice: ['https://images.unsplash.com/photo-1514890547357-a9ee288728e0?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1534113414509-0eec2bfb493f?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=700&q=80'],
+  espana: ['https://images.unsplash.com/photo-1509840841025-9088ba78a826?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=700&q=80'],
+  spain: ['https://images.unsplash.com/photo-1509840841025-9088ba78a826?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=700&q=80'],
+  barcelona: ['https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1579282240050-352db0a14c61?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1562883676-8c7feb83f09b?auto=format&fit=crop&w=700&q=80'],
+  jordania: ['https://images.unsplash.com/photo-1547234935-80c7145ec969?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1501233339699-2051864573af?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=700&q=80'],
+  jordan: ['https://images.unsplash.com/photo-1547234935-80c7145ec969?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1501233339699-2051864573af?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=700&q=80'],
+  dubai: ['https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1582672751936-b20e4f9c5e02?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=700&q=80'],
+  bali: ['https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=700&q=80'],
+  santorini: ['https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1601581875309-fafbf2d3ed3a?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1555993539-1732b0258235?auto=format&fit=crop&w=700&q=80'],
+  grecia: ['https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1601581875309-fafbf2d3ed3a?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1555993539-1732b0258235?auto=format&fit=crop&w=700&q=80'],
+  greece: ['https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1601581875309-fafbf2d3ed3a?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1555993539-1732b0258235?auto=format&fit=crop&w=700&q=80'],
+  "machu picchu": ['https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1580502304784-8985b7eb7260?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1461863109726-246fa9598dc3?auto=format&fit=crop&w=700&q=80'],
+  peru: ['https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1580502304784-8985b7eb7260?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1461863109726-246fa9598dc3?auto=format&fit=crop&w=700&q=80'],
+  "new york": ['https://images.unsplash.com/photo-1500916434205-0c77489c6cf7?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1522083165195-3424ed129620?auto=format&fit=crop&w=700&q=80'],
+  "cape town": ['https://images.unsplash.com/photo-1580060839134-75a5edca2e99?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1563656157432-67560011e209?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1504893524553-b855bce32c67?auto=format&fit=crop&w=700&q=80'],
+  amsterdam: ['https://images.unsplash.com/photo-1534351590666-13e3e96b5017?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1583416750470-965b2707b355?auto=format&fit=crop&w=700&q=80'],
+  bangkok: ['https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1570366583862-f91883984fde?auto=format&fit=crop&w=700&q=80'],
+  marrakech: ['https://images.unsplash.com/photo-1489493887464-892be6d1daae?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=700&q=80', 'https://images.unsplash.com/photo-1548453457-b5e49c3fb0a2?auto=format&fit=crop&w=700&q=80']
+}
 
 const COMMON_DESTINATIONS = [
   'spain', 'espana', 'españa', 'japan', 'japon', 'colombia', 'france', 'francia',
@@ -685,3 +649,46 @@ async function sendMessage() {
     statusDot.title = 'Backend offline';
   }
 })();
+
+// ── Floating Chat Popup Logic ──────────────────────────────────────────────
+const chatFab = document.getElementById('chat-fab');
+const chatPopup = document.getElementById('chat-popup');
+
+if (chatFab && chatPopup) {
+  chatFab.addEventListener('click', () => {
+    chatFab.classList.toggle('is-open');
+    if (chatFab.classList.contains('is-open')) {
+      chatFab.querySelector('.fab-open').style.display = 'none';
+      chatFab.querySelector('.fab-close').style.display = 'inline';
+      chatPopup.classList.add('is-open');
+      // Autofocus input when opening
+      setTimeout(() => document.getElementById('user-input').focus(), 300);
+      
+      // Hide badge
+      const badge = document.getElementById('fab-badge');
+      if(badge) badge.classList.remove('show');
+    } else {
+      chatFab.querySelector('.fab-open').style.display = 'inline';
+      chatFab.querySelector('.fab-close').style.display = 'none';
+      chatPopup.classList.remove('is-open');
+    }
+  });
+}
+
+// Ensure clicking destination gallery cards sends the message
+document.querySelectorAll('.destination-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const prompt = card.getAttribute('data-prompt');
+    if (prompt) {
+      document.getElementById('user-input').value = prompt;
+      
+      // Open popup if closed
+      if (chatFab && !chatFab.classList.contains('is-open')) {
+        chatFab.click();
+      }
+      
+      // Trigger send
+      setTimeout(() => document.getElementById('send-btn').click(), 400);
+    }
+  });
+});
