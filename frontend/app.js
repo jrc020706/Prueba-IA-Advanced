@@ -182,19 +182,22 @@ function extractDestination(text) {
   return null;
 }
 
-function buildVisualContext(userText) {
+function buildVisualContext(userText, backendDestination = null) {
   const normalized = normalizeText(userText);
-  const destination = extractDestination(userText);
+  const destination = backendDestination || extractDestination(userText);
   if (!destination) return null;
 
+  // If the backend explicitly gave us a destination, we likely want to show SOMETHING.
   const wantsMap = /(mapa|maps|google maps|ubicacion|ubicado|donde queda|donde esta|location|located|where is)/i.test(normalized);
-  const wantsImages = /(imagen|imagenes|foto|fotos|galeria|muestrame|mostrar|images|photos|gallery|show me)/i.test(normalized);
+  const wantsImages = /(imagen|imagenes|foto|fotos|galeria|muestrame|mostrar|images|photos|gallery|show me|visitar|lugares|places|visit)/i.test(normalized);
 
-  if (!wantsMap && !wantsImages) return null;
+  // If it's a "places to visit" or similar, show images by default
+  const isGeneralQuery = /(visitar|viaje|lugares|places|visit|trip|travel)/i.test(normalized);
+
   return {
     destination,
     map: wantsMap,
-    images: wantsImages || wantsMap,
+    images: wantsImages || wantsMap || isGeneralQuery || !!backendDestination,
   };
 }
 
@@ -654,7 +657,7 @@ async function sendMessage() {
 
     removeTyping();
     const visualDestination = data.destination || text;
-    appendBotMessage(data.text, data.tool_used, data.tool_name, audioBlob, buildVisualContext(visualDestination), audioFailed);
+    appendBotMessage(data.text, data.tool_used, data.tool_name, audioBlob, buildVisualContext(text, data.destination), audioFailed);
 
   } catch (err) {
     removeTyping();

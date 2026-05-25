@@ -371,7 +371,7 @@ def place_image_search(query: str) -> str:
     images = search_destination_images(query, max_results=5)
     if not images:
         return "No image results found for that destination."
-    return "\n".join(f"Image {index + 1}: {url}" for index, url in enumerate(images))
+    return f"[INTERNAL DATA] I found {len(images)} images for '{query}'. (Note: Inform the user and mention the gallery below, but DO NOT print these URLs manually): " + ", ".join(images)
 
 
 # ---------------------------------------------------------------------------
@@ -395,7 +395,7 @@ INSTRUCTIONS:
 
 7. PROACTIVENESS: After answering, always suggest the logical next step: visa requirements, best season to visit, packing tips, local customs, must-try dishes, or how to get around. Make users feel excited and confident about their journey.
 
-8. VISUAL UI SUPPORT: The frontend can display Google Maps embeds and image galleries. If the user asks to see photos/images or a map/location of a travel destination, do not say you cannot show them. Briefly answer the travel question and mention that the map or gallery is shown below in the interface."""
+8. VISUAL UI SUPPORT: The frontend displays Google Maps and image galleries automatically. When the user asks for photos, images, maps or locations, answer the travel question and mention the gallery/map below. VERY IMPORTANT: DO NOT include raw image URLs or "Image 1: http..." links in your response text. The UI handles the visuals based on the destination you identify."""
 
 
 # ---------------------------------------------------------------------------
@@ -456,8 +456,8 @@ def _extract_destination_from_location_question(text: str) -> str | None:
     normalized = text.strip()
     patterns = [
         r"(?:where\s+is|where's)\s+(.+?)(?:\s+located|\s+situated|\?|$)",
-        r"(?:location\s+of|map\s+of|google\s+maps\s+of|photos\s+of|images\s+of)\s+(.+?)(?:\?|$)",
-        r"(?:donde\s+esta|dónde\s+está|donde\s+queda|dónde\s+queda|ubicacion\s+de|ubicación\s+de|donde\s+se\s+ubica|dónde\s+se\s+ubica|visitar|viaje\s+a)\s+(.+?)(?:\?|$)",
+        r"(?:location\s+of|map\s+of|google\s+maps\s+of|photos\s+of|images\s+of|pictures\s+of)\s+(?:of\s+|in\s+)?(.+?)(?:\?|$)",
+        r"(?:donde\s+esta|dónde\s+está|donde\s+queda|dónde\s+queda|ubicacion\s+de|ubicación\s+de|donde\s+se\s+ubica|dónde\s+se\s+ubica|visitar|viaje\s+a)\s+(?:en\s+|de\s+|a\s+)?(.+?)(?:\?|$)",
         r"(?:donde\s+esta\s+ubicado|dónde\s+está\s+ubicado|donde\s+esta\s+ubicada|dónde\s+está\s+ubicada)\s+(.+?)(?:\?|$)",
     ]
     for pattern in patterns:
@@ -603,6 +603,17 @@ def run_agent(session_id: str, user_message: str) -> dict:
                     name = tc.get("name") if isinstance(tc, dict) else getattr(tc, "name", None)
                     if name:
                         tools_used.append(name)
+
+    # ── Final Fallback for destination (from tool calls) ──────────────────
+    if not destination_for_location and tools_used:
+        for m in messages[last_human_idx:]:
+            if isinstance(m, AIMessage) and getattr(m, "tool_calls", None):
+                for tc in m.tool_calls:
+                    t_name = tc.get("name") if isinstance(tc, dict) else getattr(tc, "name", None)
+                    if t_name == "place_image_search":
+                        args = tc.get("args") if isinstance(tc, dict) else getattr(tc, "args", {})
+                        destination_for_location = args.get("query")
+                        break
 
     return {
         "text":       output_text,
