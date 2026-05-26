@@ -18,3 +18,4 @@ lxml
 langchain-google-genai
 langchain-groq
 gTTS
+langdetect

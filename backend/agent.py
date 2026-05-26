@@ -9,6 +9,7 @@ import re
 import requests
 from urllib.parse import unquote
 from dotenv import load_dotenv
+from langdetect import detect_langs, LangDetectException
 
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_groq import ChatGroq
@@ -447,14 +448,37 @@ def _contains_any(text: str, terms: tuple[str, ...]) -> bool:
     return any(term in normalized for term in terms)
 
 
-def _is_spanish_text(text: str) -> bool:
-    normalized = text.lower()
-    spanish_markers = (
-        "donde", "dónde", "esta", "está", "ubicado", "ubicada", "imagenes",
-        "imágenes", "fotos", "muestrame", "muéstrame", "lugares", "viaje",
-        "viajar", "pais", "país", "ciudad",
-    )
-    return any(marker in normalized for marker in spanish_markers)
+def _detect_language(text: str) -> str:
+    """
+    Detect if text is primarily in Spanish or English.
+    Returns: 'es' for Spanish, 'en' for English, or 'es' by default if uncertain.
+    """
+    if not text or len(text.strip()) < 3:
+        return 'es'  # Default to Spanish for very short text
+    
+    try:
+        # langdetect returns a list of Language objects with probabilities
+        detections = detect_langs(text)
+        if detections:
+            # Get the language with highest probability
+            primary_lang = str(detections[0]).split(':')[0]  # e.g., 'en' or 'es'
+            # Check if it's English, if not assume Spanish
+            if primary_lang == 'en':
+                return 'en'
+            elif primary_lang == 'es':
+                return 'es'
+    except (LangDetectException, Exception):
+        # Fallback to checking for Spanish keywords if detection fails
+        normalized = text.lower()
+        spanish_markers = (
+            "donde", "dónde", "esta", "está", "ubicado", "ubicada", "imagenes",
+            "imágenes", "fotos", "muestrame", "muéstrame", "lugares", "viaje",
+            "viajar", "pais", "país", "ciudad",
+        )
+        if any(marker in normalized for marker in spanish_markers):
+            return 'es'
+    
+    return 'es'  # Default to Spanish
 
 
 def _extract_destination_from_location_question(text: str) -> str | None:
@@ -478,6 +502,10 @@ def run_agent(session_id: str, user_message: str) -> dict:
     Run the agent for a given session.
     Returns: { text, tool_used, tool_name, tools_used }
     """
+    # Detect user language early
+    user_language = _detect_language(user_message)
+    user_is_spanish = (user_language == 'es')
+    
     if not _is_travel_related(user_message):
         return {
             "text": TRAVEL_SCOPE_MESSAGE_ES,
@@ -489,11 +517,17 @@ def run_agent(session_id: str, user_message: str) -> dict:
     config  = {"configurable": {"thread_id": session_id}}
     agent_message = user_message
     destination_for_location = _extract_destination_from_location_question(user_message)
+    
+    # Add language hint to the agent
+    language_hint = "[RESPOND IN SPANISH]" if user_is_spanish else "[RESPOND IN ENGLISH]"
+    
     if destination_for_location:
         agent_message = (
-            "Travel destination location question. Answer directly with where this "
+            f"{language_hint} Travel destination location question. Answer directly with where this "
             f"place is located, why travelers visit it, and mention the map/gallery below: {user_message}"
         )
+    else:
+        agent_message = f"{language_hint} {user_message}"
 
     inputs  = {"messages": [HumanMessage(content=agent_message)]}
 
@@ -510,7 +544,7 @@ def run_agent(session_id: str, user_message: str) -> dict:
         )
 
     normalized_output = output_text.lower()
-    user_is_spanish = _is_spanish_text(user_message)
+    # user_is_spanish already detected at the beginning of run_agent
     if _contains_any(user_message, IMAGE_REQUEST_TERMS) and (
         "no puedo mostrar" in normalized_output
         or "cannot show" in normalized_output
