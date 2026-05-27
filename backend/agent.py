@@ -47,7 +47,7 @@ TRAVEL_KEYWORDS = {
     "ticket", "tickets", "price", "prices", "cost", "costs", "fare", "fares", "how much",
     "dangerous", "danger", "safe", "unsafe", "risky", "risk", "crime", "criminal", "violence", "violent", "advice", "warning",
     "advisory", "secure", "security", "warning", "precaution", "cautious", "avoid", "threat",
-    "viaje", "viajar", "turismo", "turista", "destino", "destinos", "ciudad",
+    "viaje", "viajar", "viajo", "turismo", "turista", "destino", "destinos", "ciudad",
     "pais", "paises", "visitar", "itinerario", "vuelo", "vuelos", "hotel",
     "hoteles", "hostal", "visa", "pasaporte", "presupuesto", "moneda", "cambio",
     "tasa", "dolar", "dolares", "euro", "euros", "pesos", "precio", "precios",
@@ -56,7 +56,7 @@ TRAVEL_KEYWORDS = {
     "clima", "ruta", "mapa", "mapas", "ubicacion", "ubicado", "queda", "playa",
     "museo", "restaurante", "comida", "seguridad", "transporte", "aeropuerto",
     "tren", "bus", "empacar", "temporada", "vacaciones", "imagenes", "fotos",
-    "lugares", "ciudades", "google maps", "donde esta", "donde queda", "donde se ubica", "llegar", "arrive", "how to", "como llegar",
+    "lugares", "ciudades", "actividades", "hacer", "alla", "allá", "alli", "allí", "google maps", "donde esta", "donde queda", "donde se ubica", "llegar", "arrive", "how to", "como llegar", "cómo llegar", "como viajo", "cómo viajo",
     "peligroso", "peligroso", "seguro", "peligro", "peligros", "delito", "violencia", "advertencia", "consejo", "recomendacion", "evitar", "riesgo",
     "asia", "africa", "europe", "america", "center america", "central america", "south america", "north america", "oceania", "middle east",
     "europa", "sudamerica", "suramerica", "centroamerica", "norteamerica", "oceania", "medio oriente",
@@ -77,6 +77,7 @@ KNOWN_DESTINATIONS = {
     "south africa", "kenya", "tanzania", "namibia", "georgia", "armenia",
     "albania", "montenegro", "slovenia", "croatia", "estonia", "latvia",
     "lithuania", "nepal", "bhutan", "uzbekistan", "kazakhstan", "jordania", "jordan", "venice", "venezia", "italy", "italia",
+    "moscu", "moscú", "moscow", "rotterdam", "netherlands", "paises bajos", "países bajos", "holanda",
 }
 
 IMAGE_SEARCH_ALIASES = {
@@ -92,11 +93,15 @@ IMAGE_SEARCH_ALIASES = {
     "cancún": "Cancún, Mexico",
     "new york": "New York City, USA",
     "nueva york": "New York City, USA",
+    "moscu": "Moscow, Russia",
+    "moscú": "Moscow, Russia",
+    "moscow": "Moscow, Russia",
+    "rotterdam": "Rotterdam, Netherlands",
 }
 
 
 def _get_image_search_variants(query: str) -> list[str]:
-    cleaned = re.sub(r"\s+", " ", query).strip()
+    cleaned = _clean_destination_name(query)
     if not cleaned:
         return []
     normalized = cleaned.lower()
@@ -113,6 +118,11 @@ def _get_image_search_variants(query: str) -> list[str]:
 
 IMAGE_REQUEST_TERMS = ("imagen", "imagenes", "foto", "fotos", "galeria", "gallery", "image", "images", "photo", "photos")
 MAP_REQUEST_TERMS = ("mapa", "maps", "google maps", "ubicacion", "ubicado", "donde queda", "donde esta", "location", "located", "where is")
+COLOMBIA_RAG_TERMS = (
+    "colombia", "colombiano", "colombiana", "bogota", "bogotá", "medellin", "medellín",
+    "cartagena", "santa marta", "tayrona", "san andres", "san andrés", "providencia",
+    "eje cafetero", "amazonas", "amazon", "cali", "barranquilla", "guatape", "guatapé",
+)
 GENERIC_SCOPE_REFUSALS = (
     "i'm here to help with travel",
     "i'm here to help you with travel",
@@ -262,6 +272,8 @@ def travel_knowledge(query: str) -> str:
     """
     if _rag_retriever is None:
         return "Knowledge base unavailable. Use web_search instead."
+    if not _contains_any(query, COLOMBIA_RAG_TERMS):
+        return "The RAG knowledge base only covers Colombia tourism. Use web_search or general travel knowledge for this destination."
     try:
         return _cached_travel_knowledge(query)
     except Exception as exc:
@@ -282,7 +294,7 @@ def _cached_destination_images(query: str, max_results: int = 6) -> tuple[str, .
     Search destination images using DuckDuckGo Images.
     Returns direct thumbnail/image URLs suitable for frontend galleries.
     """
-    cleaned = re.sub(r"\s+", " ", query).strip()
+    cleaned = _clean_destination_name(query)
     if not cleaned:
         return []
 
@@ -625,18 +637,37 @@ def _detect_language(text: str) -> str:
     return 'es'  # Default to Spanish
 
 
+def _clean_destination_name(value: str) -> str:
+    destination = re.sub(r"\s+", " ", value).strip(" .¿?¡!")
+    destination = re.sub(
+        r"^(ubicado|ubicada|ubica|queda|esta|está|en|de|del|la|el|a)\s+",
+        "",
+        destination,
+        flags=re.IGNORECASE,
+    )
+    destination = re.sub(
+        r"\b(google maps|maps|mapa|imagenes|imágenes|imagen|fotos|foto|galeria|galería|por favor|please)\b",
+        "",
+        destination,
+        flags=re.IGNORECASE,
+    )
+    destination = re.sub(r"\s+", " ", destination).strip(" .¿?¡!")
+    return destination
+
+
 def _extract_destination_from_location_question(text: str) -> str | None:
     normalized = text.strip()
     patterns = [
+        r"(?:donde\s+queda|dónde\s+queda|donde\s+esta|dónde\s+está)\s+(?:ubicado|ubicada|ubicada\s+en|ubicado\s+en)?\s*(.+?)(?:\?|$)",
+        r"(?:donde\s+esta\s+ubicado|dónde\s+está\s+ubicado|donde\s+esta\s+ubicada|dónde\s+está\s+ubicada)\s+(.+?)(?:\?|$)",
         r"(?:where\s+is|where's)\s+(.+?)(?:\s+located|\s+situated|\?|$)",
         r"(?:location\s+of|map\s+of|google\s+maps\s+of|photos\s+of|images\s+of|pictures\s+of)\s+(?:of\s+|in\s+)?(.+?)(?:\?|$)",
         r"(?:donde\s+esta|dónde\s+está|donde\s+queda|dónde\s+queda|ubicacion\s+de|ubicación\s+de|donde\s+se\s+ubica|dónde\s+se\s+ubica|visitar|viaje\s+a)\s+(?:en\s+|de\s+|a\s+)?(.+?)(?:\?|$)",
-        r"(?:donde\s+esta\s+ubicado|dónde\s+está\s+ubicado|donde\s+esta\s+ubicada|dónde\s+está\s+ubicada)\s+(.+?)(?:\?|$)",
     ]
     for pattern in patterns:
         match = re.search(pattern, normalized, flags=re.IGNORECASE)
         if match:
-            destination = re.sub(r"\s+", " ", match.group(1)).strip(" .¿?¡!")
+            destination = _clean_destination_name(match.group(1))
             return destination or None
     return None
 

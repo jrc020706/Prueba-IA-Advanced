@@ -149,7 +149,7 @@ function extractDestination(text) {
 
 function cleanDestinationName(value) {
   return normalizeText(value)
-    .replace(/\b(por favor|please|google maps|maps|mapa|imagenes|imagen|fotos|foto|galeria|muestrame|mostrar|located|situated|ubicado|ubicada|ubicacion|location|on the map|travel|destination|donde queda|donde esta|visitar|lugares)\b/g, '')
+    .replace(/\b(por favor|please|google maps|maps|mapa|imagenes|imagen|fotos|foto|galeria|muestrame|mostrar|located|situated|ubicado|ubicada|ubica|ubicacion|queda|location|on the map|travel|destination|donde queda|donde esta|visitar|lugares)\b/g, '')
     .replace(/^(de|del|la|el|en|a)\s+/g, '')
     .replace(/\s+(de|del|la|el|en|a)$/g, '')
     .replace(/[¿?¡!.,]/g, '')
@@ -159,7 +159,7 @@ function cleanDestinationName(value) {
 
 function buildVisualContext(userText, backendDestination = null) {
   const normalized = normalizeText(userText);
-  const destination = backendDestination || extractDestination(userText);
+  const destination = backendDestination ? cleanDestinationName(backendDestination) : extractDestination(userText);
   if (!destination) return null;
 
   // If the backend explicitly gave us a destination, we likely want to show SOMETHING.
