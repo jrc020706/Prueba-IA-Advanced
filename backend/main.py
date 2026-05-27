@@ -63,6 +63,7 @@ class ChatResponse(BaseModel):
     tools_used: list[str]
     mode: str
     destination: str | None = None
+    model_used: str | None = None
 
 
 class TTSRequest(BaseModel):
@@ -95,14 +96,15 @@ async def chat(request: ChatRequest):
     if not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
     try:
-        result = run_agent(request.session_id, request.message)
+        result = run_agent(request.session_id, request.message, mode=request.mode)
         return ChatResponse(
             text=result["text"],
             tool_used=result["tool_used"],
             tool_name=result["tool_name"],
             tools_used=result["tools_used"],
             mode=request.mode,
-            destination=result.get("destination")
+            destination=result.get("destination"),
+            model_used=result.get("model_used"),
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Agent error: {exc}")

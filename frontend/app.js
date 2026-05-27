@@ -141,13 +141,20 @@ function extractDestination(text) {
   for (const pattern of patterns) {
     const match = normalizeText(text).match(pattern);
     if (match?.[1]) {
-      return match[1]
-        .replace(/\b(por favor|please|google maps|mapa|imagenes|fotos|located|situated|ubicado|ubicada|location|on the map|travel|destination)\b/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
+      return cleanDestinationName(match[1]);
     }
   }
   return null;
+}
+
+function cleanDestinationName(value) {
+  return normalizeText(value)
+    .replace(/\b(por favor|please|google maps|maps|mapa|imagenes|imagen|fotos|foto|galeria|muestrame|mostrar|located|situated|ubicado|ubicada|ubicacion|location|on the map|travel|destination|donde queda|donde esta|visitar|lugares)\b/g, '')
+    .replace(/^(de|del|la|el|en|a)\s+/g, '')
+    .replace(/\s+(de|del|la|el|en|a)$/g, '')
+    .replace(/[¿?¡!.,]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function buildVisualContext(userText, backendDestination = null) {
@@ -197,9 +204,16 @@ async function fetchDestinationImages(destination) {
 async function hydrateImageGallery(row, destination) {
   const gallery = row.querySelector('.image-gallery');
   if (!gallery) return;
+  const hasLocalImages = Boolean(gallery.querySelector('img'));
   const images = await fetchDestinationImages(destination);
-  if (!images.length) return;
+  if (!images.length) {
+    if (hasLocalImages) return;
+    gallery.classList.add('image-gallery-empty');
+    gallery.innerHTML = `<div>No encontre imagenes especificas para ${escapeHtml(destination)}.</div>`;
+    return;
+  }
 
+  gallery.classList.remove('image-gallery-loading', 'image-gallery-empty');
   gallery.innerHTML = images.slice(0, 6).map((src, index) => `
     <img src="${src}" alt="${escapeHtml(destination)} travel view ${index + 1}" loading="lazy" />
   `).join('');
@@ -492,12 +506,12 @@ function appendBotMessage(text, toolUsed, toolName, audioBlob, visualContext = n
   }
 
   if (visualContext?.images) {
-    const images = imageSetFor(visualContext.destination);
+    const images = DESTINATION_IMAGES[normalizeText(visualContext.destination)];
     visualHtml += `
-      <div class="image-gallery" aria-label="Travel images for ${escapeHtml(visualContext.destination)}">
-        ${images.map((src, index) => `
+      <div class="image-gallery ${images ? '' : 'image-gallery-loading'}" aria-label="Travel images for ${escapeHtml(visualContext.destination)}">
+        ${images ? images.map((src, index) => `
           <img src="${src}" alt="${escapeHtml(visualContext.destination)} travel view ${index + 1}" loading="lazy" />
-        `).join('')}
+        `).join('') : '<div>Buscando imagenes del destino...</div>'}
       </div>
     `;
   }

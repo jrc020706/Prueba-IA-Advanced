@@ -683,6 +683,19 @@ body.light-theme .mode-toggle { background: rgba(0,0,0,0.05); }
   transition: transform var(--dur-fast) var(--ease);
 }
 .image-gallery img:hover { transform: scale(1.04); }
+.image-gallery-loading,
+.image-gallery-empty {
+  display: block;
+}
+.image-gallery-loading div,
+.image-gallery-empty div {
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
 
 /* ── Typing Indicator ───────────────────────────────────────────────── */
 .typing-indicator {

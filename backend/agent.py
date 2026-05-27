@@ -1,12 +1,13 @@
 """
 ViajeBot — Travel Agent (LangGraph ReAct + LangChain 1.x compatible)
 Tools: web_search, currency_converter, travel_knowledge (RAG), place_image_search
-Memory: MemorySaver with thread_id per session, last 14 messages kept (7 turns)
+Memory: MemorySaver with thread_id per session, last 8 non-system messages sent to the model
 """
 
 import os
 import re
 import requests
+from functools import lru_cache
 from urllib.parse import unquote
 from dotenv import load_dotenv
 from langdetect import detect_langs, LangDetectException
@@ -27,6 +28,8 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 RAG_URL = os.getenv("RAG_URL", "https://en.wikipedia.org/wiki/Tourism_in_Colombia")
+GROQ_FAST_MODEL = os.getenv("GROQ_FAST_MODEL", "llama-3.1-8b-instant")
+GROQ_THINKING_MODEL = os.getenv("GROQ_THINKING_MODEL", "llama-3.3-70b-versatile")
 
 TRAVEL_SCOPE_MESSAGE_ES = (
     "Puedo ayudarte con viajes, destinos, mapas, itinerarios, hoteles, vuelos, "
@@ -123,6 +126,29 @@ GENERIC_SCOPE_REFUSALS = (
 _rag_retriever = None
 
 
+def _retry(operation, attempts: int = 2):
+    """Run a small retry loop for flaky network/model calls."""
+    last_error = None
+    for _ in range(attempts):
+        try:
+            return operation()
+        except Exception as exc:
+            last_error = exc
+    raise last_error
+
+
+def _ddg_text_search(query: str, max_results: int = 4) -> list[dict]:
+    from duckduckgo_search import DDGS
+    with DDGS() as ddgs:
+        return list(ddgs.text(query, max_results=max_results))
+
+
+def _ddg_image_search(query: str, max_results: int = 6) -> list[dict]:
+    from duckduckgo_search import DDGS
+    with DDGS() as ddgs:
+        return list(ddgs.images(query, max_results=max_results, safesearch="moderate"))
+
+
 def setup_rag() -> None:
     """Scrape RAG_URL, chunk, embed, store in FAISS. Called once at startup."""
     global _rag_retriever
@@ -132,18 +158,18 @@ def setup_rag() -> None:
         from bs4 import BeautifulSoup
 
         print(f"[RAG] Fetching content from: {RAG_URL}")
-        resp = requests.get(RAG_URL, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+        resp = _retry(lambda: requests.get(RAG_URL, timeout=30, headers={"User-Agent": "Mozilla/5.0"}))
         soup = BeautifulSoup(resp.text, "lxml")
         for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
             tag.decompose()
         raw_text = soup.get_text(separator="\n", strip=True)
 
-        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
+        splitter = RecursiveCharacterTextSplitter(chunk_size=650, chunk_overlap=80)
         chunks = splitter.create_documents([raw_text], metadatas=[{"source": RAG_URL}])
 
         embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=GEMINI_API_KEY)
         vectorstore = FAISS.from_documents(chunks, embeddings)
-        _rag_retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+        _rag_retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
         print(f"[RAG] ✅ Indexed {len(chunks)} chunks from {RAG_URL}")
     except Exception as exc:
         print(f"[RAG] ⚠️  RAG setup failed (will skip): {exc}")
@@ -164,9 +190,7 @@ def web_search(query: str) -> str:
         query: Search query string.
     """
     try:
-        from duckduckgo_search import DDGS
-        with DDGS() as ddgs:
-            results = list(ddgs.text(query, max_results=5))
+        results = _retry(lambda: _ddg_text_search(query, max_results=4))
         if not results:
             return "No search results found."
         lines = []
@@ -180,6 +204,13 @@ def web_search(query: str) -> str:
 # ---------------------------------------------------------------------------
 # Tool 2 — Currency Converter (open.er-api.com, free, no API key)
 # ---------------------------------------------------------------------------
+@lru_cache(maxsize=64)
+def _currency_rates(from_currency: str) -> dict:
+    url = f"https://open.er-api.com/v6/latest/{from_currency.upper()}"
+    resp = _retry(lambda: requests.get(url, timeout=10))
+    return resp.json()
+
+
 @tool
 def currency_converter(amount: float, from_currency: str, to_currency: str) -> str:
     """
@@ -193,9 +224,8 @@ def currency_converter(amount: float, from_currency: str, to_currency: str) -> s
         to_currency: ISO 4217 target code (e.g. 'COP', 'USD', 'GBP').
     """
     try:
-        url = f"https://open.er-api.com/v6/latest/{from_currency.upper()}"
-        resp = requests.get(url, timeout=10)
-        data = resp.json()
+        source = from_currency.upper()
+        data = _currency_rates(source)
         if data.get("result") != "success":
             return "Could not retrieve exchange rates. Please try again later."
         rates = data.get("rates", {})
@@ -209,8 +239,8 @@ def currency_converter(amount: float, from_currency: str, to_currency: str) -> s
         rate = rates[target]
         return (
             f"💱 Currency Conversion\n"
-            f"  {amount:,.2f} {from_currency.upper()} → {converted:,.2f} {target}\n"
-            f"  Rate: 1 {from_currency.upper()} = {rate:,.4f} {target}\n"
+            f"  {amount:,.2f} {source} → {converted:,.2f} {target}\n"
+            f"  Rate: 1 {source} = {rate:,.4f} {target}\n"
             f"  Source: open.er-api.com"
         )
     except Exception as exc:
@@ -233,15 +263,21 @@ def travel_knowledge(query: str) -> str:
     if _rag_retriever is None:
         return "Knowledge base unavailable. Use web_search instead."
     try:
-        docs = _rag_retriever.invoke(query)
-        if not docs:
-            return "No relevant information found in the knowledge base."
-        return "\n\n---\n\n".join(d.page_content for d in docs)
+        return _cached_travel_knowledge(query)
     except Exception as exc:
         return f"Retrieval error: {exc}"
 
 
-def search_destination_images(query: str, max_results: int = 6) -> list[str]:
+@lru_cache(maxsize=128)
+def _cached_travel_knowledge(query: str) -> str:
+    docs = _retry(lambda: _rag_retriever.invoke(query))
+    if not docs:
+        return "No relevant information found in the knowledge base."
+    return "\n\n---\n\n".join(d.page_content[:900] for d in docs)
+
+
+@lru_cache(maxsize=256)
+def _cached_destination_images(query: str, max_results: int = 6) -> tuple[str, ...]:
     """
     Search destination images using DuckDuckGo Images.
     Returns direct thumbnail/image URLs suitable for frontend galleries.
@@ -252,38 +288,37 @@ def search_destination_images(query: str, max_results: int = 6) -> list[str]:
 
     variants = _get_image_search_variants(cleaned)
     try:
-        from duckduckgo_search import DDGS
-        with DDGS() as ddgs:
-            for variant in variants:
-                search_query = f"{variant} tourism city landmark"
-                results = list(ddgs.images(
-                    search_query,
-                    max_results=max_results,
-                    safesearch="moderate",
-                ))
-                images: list[str] = []
-                for result in results:
-                    url = result.get("image") or result.get("thumbnail")
-                    if (
-                        url
-                        and url.startswith(("http://", "https://"))
-                        and not _is_non_travel_image_url(url)
-                        and url not in images
-                    ):
-                        images.append(url)
-                if images:
-                    return images[:max_results]
+        for variant in variants:
+            search_query = f"{variant} tourism city landmark"
+            results = _retry(lambda: _ddg_image_search(search_query, max_results=max_results))
+            images: list[str] = []
+            for result in results:
+                url = result.get("image") or result.get("thumbnail")
+                if (
+                    url
+                    and url.startswith(("http://", "https://"))
+                    and not _is_non_travel_image_url(url)
+                    and url not in images
+                ):
+                    images.append(url)
+            if images:
+                return tuple(images[:max_results])
     except Exception:
         pass
 
     for variant in variants:
         images = _wikimedia_destination_images(variant, max_results=max_results)
         if images:
-            return images
+            return tuple(images)
 
-    return []
+    return tuple()
 
 
+def search_destination_images(query: str, max_results: int = 6) -> list[str]:
+    return list(_cached_destination_images(query, max_results))
+
+
+@lru_cache(maxsize=256)
 def _wikimedia_destination_images(query: str, max_results: int = 6) -> list[str]:
     """Fallback image lookup through Wikipedia/Wikimedia Commons."""
     queries = []
@@ -299,7 +334,7 @@ def _wikimedia_destination_images(query: str, max_results: int = 6) -> list[str]
         headers = {"User-Agent": "ViajeBot/1.0 travel assistant"}
 
         for search_query in queries:
-            search_resp = session.get(
+            search_resp = _retry(lambda: session.get(
                 "https://en.wikipedia.org/w/api.php",
                 params={
                     "action": "query",
@@ -310,12 +345,12 @@ def _wikimedia_destination_images(query: str, max_results: int = 6) -> list[str]
                 },
                 headers=headers,
                 timeout=10,
-            )
+            ))
             search_resp.raise_for_status()
             search_items = search_resp.json().get("query", {}).get("search", [])
             title = search_items[0]["title"] if search_items else search_query
 
-            page_resp = session.get(
+            page_resp = _retry(lambda: session.get(
                 "https://en.wikipedia.org/w/api.php",
                 params={
                     "action": "query",
@@ -327,7 +362,7 @@ def _wikimedia_destination_images(query: str, max_results: int = 6) -> list[str]
                 },
                 headers=headers,
                 timeout=10,
-            )
+            ))
             page_resp.raise_for_status()
             pages = page_resp.json().get("query", {}).get("pages", {})
 
@@ -345,7 +380,7 @@ def _wikimedia_destination_images(query: str, max_results: int = 6) -> list[str]
                     file_titles.append(file_title)
 
             for file_title in file_titles[:12]:
-                info_resp = session.get(
+                info_resp = _retry(lambda: session.get(
                     "https://en.wikipedia.org/w/api.php",
                     params={
                         "action": "query",
@@ -357,7 +392,7 @@ def _wikimedia_destination_images(query: str, max_results: int = 6) -> list[str]
                     },
                     headers=headers,
                     timeout=10,
-                )
+                ))
                 info_resp.raise_for_status()
                 info_pages = info_resp.json().get("query", {}).get("pages", {})
                 for info_page in info_pages.values():
@@ -378,6 +413,7 @@ def _wikimedia_destination_images(query: str, max_results: int = 6) -> list[str]
         return []
 
 
+@lru_cache(maxsize=256)
 def fetch_destination_summary(query: str) -> str:
     """Fetch a short encyclopedic destination summary for location fallback responses."""
     cleaned_query = re.sub(r"\s+", " ", query).strip()
@@ -386,11 +422,11 @@ def fetch_destination_summary(query: str) -> str:
     wiki_title = IMAGE_SEARCH_ALIASES.get(cleaned_query.lower(), cleaned_query)
     wiki_title = wiki_title.replace(" ", "_")
     try:
-        resp = requests.get(
+        resp = _retry(lambda: requests.get(
             f"https://en.wikipedia.org/api/rest_v1/page/summary/{wiki_title}",
             headers={"User-Agent": "ViajeBot/1.0 travel assistant"},
             timeout=10,
-        )
+        ))
         if resp.status_code != 200:
             return ""
         data = resp.json()
@@ -439,45 +475,33 @@ def place_image_search(query: str) -> str:
 # ---------------------------------------------------------------------------
 # System Prompt (extended)
 # ---------------------------------------------------------------------------
-SYSTEM_PROMPT = """You are ViajeBot ✈️, an expert AI travel assistant specialized in Colombian national travel and international destinations worldwide. Your mission is to help users plan safe, enjoyable, and realistic trips.
+SYSTEM_PROMPT = """You are ViajeBot, a warm travel assistant for Colombia and worldwide destinations.
 
-CRITICAL: You MUST answer questions about destination safety, dangerous cities/countries, crime rates, and travel risks when asked. These are legitimate travel planning questions — provide balanced, factual, actionable guidance. Do NOT invent facts or refuse to answer reasonable safety questions.
+Scope: answer only travel topics: destinations, itineraries, maps, photos, flights, hotels, visas, budgets, currency, food, transport, seasons, safety and travel risks.
 
-INSTRUCTIONS (summary + strict rules):
+Style:
+- Match the user's language: Spanish or English.
+- Keep responses concise unless user requests details.
+- For destination planning, use short sections when useful: Overview, Budget, Safety, Best season, Food, Transportation.
 
-0. RESPONSE STRUCTURE (MANDATORY): Use this response structure when providing destination recommendations or planning guidance:
-- Overview — short summary of the answer (1–2 sentences).
-- Budget — realistic cost considerations or ranges and what they cover.
-- Safety — current safety considerations, risks, and precautions.
-- Best season — recommended months and why.
-- Food — local specialties to try and dietary notes.
-- Transportation — common ways to get there and move around.
+Tools:
+- Use travel_knowledge first for Colombia-specific context.
+- Use web_search for time-sensitive or uncertain facts: prices, routes, visas, safety alerts, schedules.
+- Use currency_converter for exchange requests.
+- Use place_image_search when users ask for images/photos/gallery.
 
-Keep answers concise unless the user explicitly asks for a detailed itinerary or expanded explanation.
+Accuracy:
+- Never invent exact prices, hotels, routes, visa rules, opening hours or safety facts.
+- For safety questions, answer directly with balanced risks and precautions.
+- Mention that travel details can change when using current facts.
 
-1. ROLE & SCOPE: You are a professional travel advisor with deep expertise in Colombia (Cartagena, Bogotá, Medellín, Eje Cafetero, San Andrés, Tayrona, Amazon) and all major international destinations. Stay focused on travel topics: destinations, flights, hotels, visas, budgets, culture, gastronomy, SAFETY, SECURITY, TRAVEL RISKS, travel advisories, maps, photos, and itineraries.
+Memory:
+- Remember user preferences in this session: budget, travel style, companions and trip duration.
+- Confirm before replacing an existing preference.
 
-2. TONE & LANGUAGE: Be warm, friendly and concise. Match the user's language exactly (Spanish/English). Use travel emojis sparingly. Avoid verbose storytelling unless requested.
-
-3. TOOL USAGE & UNCERTAINTY HANDLING: Prefer tools over guesses.
-- Use `travel_knowledge` first for Colombia-specific factual context.
-- Use `web_search` whenever information is time-sensitive (prices, flight routes, visa rules, safety alerts) or when you are unsure. If unsure or if information may have changed, explicitly call `web_search` and cite it in your answer.
-
-4. ANTI-HALLUCINATION (STRICT): Never invent or fabricate specific factual details such as hotel names, exact prices, flight numbers or routes, visa rules, or official opening hours. If a user asks for these and you do not have a verifiable source, state you do not have up-to-date info and use `web_search` or suggest official sources (embassy sites, airline pages).
-
-5. TEMPORAL CITATION (FORCE): Travel facts change quickly. When providing safety, visa, price or schedule information, include a short temporal disclaimer such as: "Information may change — verify with official sources or use web_search; details current at time of response." If you used `web_search` or `travel_knowledge`, mention which source/tool you consulted.
-
-6. SAFETY & ETHICS: ALWAYS provide honest, factual information about destination safety. For dangerous areas explain why they are risky (political instability, crime, natural hazards) and suggest safer alternatives or precautions. Never recommend illegal activities.
-
-7. MEMORY USAGE (IMPROVE PERSONALIZATION): Track and persist traveler preferences in session memory when the user provides them. Examples of preferences to track: `budget` (low/medium/high or numeric), `travel_style` (backpacker/comfort/luxury), `companions` (solo/couple/family/friends), and `trip_duration` (days). Use stored preferences to tailor recommendations, and confirm before overriding them when the user provides new values.
-
-8. PROACTIVENESS: After answering, suggest logical next steps (check visa, best season, packing tips, links to verify) and offer to run a `web_search` for live info if helpful.
-
-9. VISUAL UI SUPPORT: The frontend handles maps and image galleries. When the user requests photos or maps, provide the travel answer and note that an image gallery or map will appear below. DO NOT include raw image URLs in the message body.
-
-10. FAILURE MODES: If a tool is unavailable (e.g., RAG retriever missing), clearly state: "Knowledge base unavailable; I'll use web_search instead." If you cannot verify a fact, say so and propose next steps to obtain verification.
-
-11. KEEP IT CONCISE: Default to short, structured replies. Only expand if the user requests more detail.
+Visual UI:
+- The frontend renders maps and image galleries. Mention that the map/gallery appears below.
+- Do not print raw image URLs.
 """
 
 
@@ -485,25 +509,68 @@ Keep answers concise unless the user explicitly asks for a detailed itinerary or
 # Agent — LangGraph ReAct (modern replacement for AgentExecutor)
 # ---------------------------------------------------------------------------
 _tools = [web_search, currency_converter, travel_knowledge, place_image_search]
-_llm   = ChatGroq(model="llama-3.1-8b-instant", groq_api_key=os.getenv("GROQ_API_KEY"), temperature=0.1)
+_llm = ChatGroq(model=GROQ_FAST_MODEL, groq_api_key=os.getenv("GROQ_API_KEY"), temperature=0.1)
+_thinking_llm = ChatGroq(model=GROQ_THINKING_MODEL, groq_api_key=os.getenv("GROQ_API_KEY"), temperature=0.1)
 _memory = MemorySaver()
 
 
-def _trim_to_window(messages: list, window: int = 14) -> list:
-    """Keep SystemMessage(s) + last `window` non-system messages."""
-    sys_msgs   = [m for m in messages if isinstance(m, SystemMessage)]
+def _trim_to_window(messages: list, window: int = 8) -> list:
+    """Keep only the last `window` non-system messages for model context."""
     other_msgs = [m for m in messages if not isinstance(m, SystemMessage)]
-    trimmed    = other_msgs[-window:] if len(other_msgs) > window else other_msgs
-    return sys_msgs + trimmed
+    return other_msgs[-window:] if len(other_msgs) > window else other_msgs
 
 
-# Build the agent once at module level
+def _agent_prompt(state: dict) -> list:
+    """Reduce model context while keeping the latest conversation turns."""
+    messages = state.get("messages", [])
+    return [SystemMessage(content=SYSTEM_PROMPT)] + _trim_to_window(messages, window=8)
+
+
+# Build both agents once. They share tools, FAISS-backed RAG and session memory.
 _agent = create_react_agent(
     _llm,
     _tools,
     checkpointer=_memory,
-    prompt=SYSTEM_PROMPT,
+    prompt=_agent_prompt,
 )
+_thinking_agent = create_react_agent(
+    _thinking_llm,
+    _tools,
+    checkpointer=_memory,
+    prompt=_agent_prompt,
+)
+
+
+def _select_agent(user_message: str, mode: str = "text"):
+    """
+    Route simple/voice turns to the fast model and complex text turns to the
+    stronger reasoning model. Tool functions and FAISS stay shared.
+    """
+    normalized = user_message.lower()
+    normalized = re.sub(r"\s+", " ", normalized)
+
+    if mode in {"voice", "audio"}:
+        return _agent, GROQ_FAST_MODEL
+
+    fast_only_terms = (
+        "imagen", "imagenes", "imágenes", "foto", "fotos", "mapa", "maps",
+        "google maps", "donde queda", "dónde queda", "donde esta", "dónde está",
+        "convierte", "convertir", "currency", "cambio", "tasa",
+    )
+    if _contains_any(normalized, fast_only_terms):
+        return _agent, GROQ_FAST_MODEL
+
+    thinking_terms = (
+        "itinerario", "plan", "ruta", "presupuesto", "budget", "seguridad",
+        "safety", "riesgo", "visa", "comparar", "compare", "recomienda",
+        "recommend", "familia", "family", "dias", "días", "weeks", "semanas",
+        "barato", "lujo", "hotel", "hoteles",
+    )
+    is_long = len(normalized.split()) >= 18
+    if is_long or _contains_any(normalized, thinking_terms):
+        return _thinking_agent, GROQ_THINKING_MODEL
+
+    return _agent, GROQ_FAST_MODEL
 
 
 def _is_travel_related(user_message: str) -> bool:
@@ -574,7 +641,7 @@ def _extract_destination_from_location_question(text: str) -> str | None:
     return None
 
 
-def run_agent(session_id: str, user_message: str) -> dict:
+def run_agent(session_id: str, user_message: str, mode: str = "text") -> dict:
     """
     Run the agent for a given session.
     Returns: { text, tool_used, tool_name, tools_used }
@@ -598,17 +665,22 @@ def run_agent(session_id: str, user_message: str) -> dict:
     # Add language hint to the agent
     language_hint = "[RESPOND IN SPANISH]" if user_is_spanish else "[RESPOND IN ENGLISH]"
     
+    mode_hint = ""
+    if mode in {"voice", "audio"}:
+        mode_hint = " [VOICE MODE: answer in 2-4 short sentences.]"
+
     if destination_for_location:
         agent_message = (
-            f"{language_hint} Travel destination location question. Answer directly with where this "
-            f"place is located, why travelers visit it, and mention the map/gallery below: {user_message}"
+            f"{language_hint}{mode_hint} Travel destination location question. Answer briefly with where this "
+            f"place is located and mention the map/gallery below: {user_message}"
         )
     else:
-        agent_message = f"{language_hint} {user_message}"
+        agent_message = f"{language_hint}{mode_hint} {user_message}"
 
     inputs  = {"messages": [HumanMessage(content=agent_message)]}
 
-    result  = _agent.invoke(inputs, config=config)
+    selected_agent, model_used = _select_agent(user_message, mode=mode)
+    result  = _retry(lambda: selected_agent.invoke(inputs, config=config))
     messages: list = result.get("messages", [])
 
     # ── Extract last AI response ────────────────────────────────────────────
@@ -736,5 +808,6 @@ def run_agent(session_id: str, user_message: str) -> dict:
         "tool_used":  len(tools_used) > 0,
         "tools_used": tools_used,
         "tool_name":  tools_used[0] if tools_used else None,
-        "destination": destination_for_location
+        "destination": destination_for_location,
+        "model_used": model_used,
     }
