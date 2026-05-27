@@ -1,129 +1,59 @@
-1. Criterios de Aceptación vs. Tu Proyecto
-Criterio del PDF	Estado en tu Proyecto	Evidencia en el Código
-App web funcional con chat e historial	✅	Carpeta frontend/ con index.html, styles.css y app.js.
-Selector de modo Texto o Voz	✅	En main.py, el endpoint /chat recibe el parámetro mode. En app.js hay lógica para toggles de voz.
-Memoria de últimos 7 mensajes	✅	En agent.py L408: _trim_to_window mantiene los últimos 14 mensajes (equivalente a 7 turnos).
-Mínimo 2 tools operativas	✅	Tienes 4 tools: web_search, currency_converter, travel_knowledge y place_image_search.
-System Prompt (mínimo 5 instrucciones)	✅	En agent.py L380: Tu prompt tiene 8 instrucciones detalladas (Role, Tone, Context, Tool Usage, etc.).
-Visualización de uso de tools en UI	✅	El backend retorna tool_used: True y el nombre de la tool; el app.js renderiza badges de "Using [Tool]".
-Respuesta multimodal (Voz)	✅	Endpoint /tts en main.py usando gTTS (Google Text-to-Speech); el frontend reproduce el audio automáticamente.
-Uso de RAG (Puntos Extra)	✅	Implementado en agent.py mediante setup_rag() y la tool travel_knowledge.
+1. Criterios de Aceptación vs. Estado Actual
+
+- App web funcional con chat e historial: ✅
+  - Evidencia: `frontend/` contiene `index.html`, `styles.css` y `app.js`.
+
+- Selector de modo Texto o Voz: ✅
+  - Evidencia: `backend/main.py` acepta `mode` en `/chat` y `frontend/app.js` tiene toggles de texto/voz.
+
+- Memoria de últimos 7 turnos: ✅
+  - Evidencia: `backend/agent.py` línea 483, `_trim_to_window()` mantiene los últimos 14 mensajes.
+
+- Mínimo 2 tools operativas: ✅
+  - Evidencia: `backend/agent.py` implementa 4 tools: `web_search`, `currency_converter`, `travel_knowledge`, `place_image_search`.
+
+- System Prompt con 5+ instrucciones: ✅
+  - Evidencia: `backend/agent.py` líneas 442-505, prompt con al menos 9 instrucciones de rol, alcance, idioma, herramientas y seguridad.
+
+- Visualización de uso de tools en UI: ✅
+  - Evidencia: `frontend/app.js` líneas 441-452, badges de herramienta en el chat.
+
+- Respuesta multimodal (Voz): ✅
+  - Evidencia: `backend/main.py` expone `/tts` y el frontend reproduce audio de respuesta.
+
+- Uso de RAG (Puntos Extra): ✅
+  - Evidencia: `backend/agent.py` con `setup_rag()` y `travel_knowledge` sobre FAISS.
+
 2. Stack de Construcción del Agente
-Tu agente ha sido construido con un stack moderno y profesional:
 
-Framework de Orquestación: LangGraph (utilizas create_react_agent y MemorySaver), que es la evolución de LangChain para agentes complejos y cíclicos.
-Framework Base: LangChain (para la integración de herramientas con Groq y Google Gemini).
-Backend API: FastAPI (Python).
-Frontend: Vanilla Stack (HTML5, CSS3, JavaScript puro).
-Modelos de IA: Groq `llama-3.1-8b-instant` (Razonamiento), Google Gemini `models/gemini-embedding-001` (Embeddings) y `gTTS` (Voz).
+- Agente: LangGraph (ReAct) con `create_react_agent` y `MemorySaver`.
+- Base: LangChain + LangGraph para herramientas y agentes.
+- Backend: FastAPI en Python.
+- Frontend: HTML, CSS y JavaScript puro.
+- Modelos: Groq `llama-3.1-8b-instant` y Google Gemini `models/gemini-embedding-001`.
+- Voz: gTTS para TTS y Groq Whisper para transcripción.
+
 3. Las Dos Tools Principales
-Aunque el agente tiene 4 herramientas, las dos más destacadas por su funcionalidad real y externa son:
 
-web_search: Utiliza DuckDuckGo para obtener información de vuelos, hoteles y clima en tiempo real.
-currency_converter: Realiza conversiones de divisas en vivo consumiendo la API de open.er-api.com. (Nota: También cuentas con travel_knowledge para RAG y place_image_search para fotos).
-4. ¿Utilizas RAG sobre una web?
-Sí, utilizas RAG (Retrieval-Augmented Generation) sobre una web.
+- `web_search`: consulta DuckDuckGo para información actualizada de vuelos, hoteles, visas, clima y recomendaciones.
+- `travel_knowledge`: consulta un índice RAG local en FAISS construido a partir de contenidos web.
 
-Fuente: El agente raspa (scrape) contenido de una URL configurable (por defecto la Wikipedia sobre turismo en Colombia).
-Proceso:
-Extrae el texto con BeautifulSoup.
-Divide el texto en fragmentos (chunking) con RecursiveCharacterTextSplitter.
-Genera embeddings con Google Gemini.
-Almacena y consulta los datos en una base vectorial local usando FAISS.
-Uso: La tool travel_knowledge consulta esta base vectorial antes de responder preguntas específicas sobre el destino.
+Adicionales:
+- `currency_converter`: convierte divisas en vivo con open.er-api.com.
+- `place_image_search`: proporciona contexto visual para destinos y activa galerías de imágenes.
+
+4. Uso de RAG sobre una web
+
+Sí, utiliza RAG.
+
+- Fuente: `RAG_URL`, por defecto una página de Wikipedia sobre turismo en Colombia.
+- Proceso: scrape HTML -> limpieza con BeautifulSoup -> chunking con RecursiveCharacterTextSplitter -> embeddings con Google Gemini -> índice FAISS.
+- Uso: `travel_knowledge` consulta FAISS antes de responder preguntas específicas de destino.
+
 Resumen de Cumplimiento
-Tu proyecto no solo cumple con los requisitos mínimos del PDF, sino que alcanza los puntos extra por el uso de LangGraph (en lugar de un agente simple) y la implementación completa del pipeline de RAG.
 
-📄 Guía de Sustentación: VoiceAgent ViajeBot
-Este documento te servirá como guion técnico para tu presentación.
-
-1. Arquitectura y Stack Tecnológico
-Backend: Python con FastAPI (Elegido por su alto rendimiento y soporte nativo para async).
-Arquitectura del Agente: LangGraph (Utilizado en lugar de un AgentExecutor básico para tener mayor control sobre el ciclo de vida y la memoria del agente).
-Modelos: Groq `llama-3.1-8b-instant` (Razonamiento), Google Gemini `models/gemini-embedding-001` (RAG) y `gTTS` (Voz).
-Memoria: MemorySaver con thread_id para persistencia por sesión.
-2. Ubicación de la Información en el Código (Evidencia Técnica)
-Componente	Archivo	Líneas Clave	Explicación para la Sustentación
-Logic del Agente (LangGraph)	backend/agent.py	
-
-L417-422
-Aquí se define el grafo de estado (ReAct) que permite al agente "pensar" antes de actuar.
-System Prompt (7+ reglas)	backend/agent.py	
-
-L379-397
-Define el rol, restricciones y el "guardrail" para que el bot solo hable de viajes.
-Pipeline RAG (Scraping)	backend/agent.py	
-
-L84-109
-Raspado de Wikipedia, fragmentación (chunking) y creación del índice vectorial en FAISS.
-Gestión de Memoria	backend/agent.py	
-
-L408-413
-Función _trim_to_window que mantiene los últimos 14 mensajes (7 pares usuario/bot) para no exceder tokens.
-Visualización de Tools (UI)	frontend/app.js	
-
-L420-430
-Lógica que renderiza el tool-badge en el historial para mostrar qué herramienta se activó.
-Multimodalidad (Modo Voz)	backend/main.py	
-
-L106-131
-Endpoint /tts que convierte el texto en MP3 usando gTTS (Google Text-to-Speech).
-Seguridad (.env)	backend/agent.py	
-
-L24-27
-Uso de python-dotenv para evitar Hardcoding de llaves API.
-3. Apartado de Posibles Preguntas (FAQ de Sustentación)
-TIP
-
-Pregunta 1: ¿Por qué elegiste LangGraph sobre el AgentExecutor estándar de LangChain?
-
-Respuesta: LangGraph permite definir agentes como grafos de estado. Esto ofrece mayor control sobre los ciclos del agente, permite implementar memorias persistentes de forma más robusta (checkpointers) y facilita la depuración de estados intermedios.
-IMPORTANT
-
-Pregunta 2: ¿Cómo manejas el "Scope Creep" o que el usuario hable de temas que no son viajes?
-
-Respuesta: Tengo una doble capa de protección:
-Capa de Código: En agent.py:L425, la función _is_travel_related filtra por palabras clave antes de llamar al LLM.
-Capa de Prompt: En el SYSTEM_PROMPT, la primera instrucción obliga al agente a rechazar temas ajenos.
-NOTE
-
-Pregunta 3: Explícame el proceso de RAG que implementaste.
-
-Respuesta: Es un pipeline dinámico. Al iniciar (startup), el sistema descarga el contenido de una URL, lo divide en partes pequeñas (chunks) para que el modelo pueda procesarlas, genera embeddings (representaciones vectoriales) y los guarda en una base de datos vectorial FAISS. Cuando el usuario pregunta algo específico, el agente busca los fragmentos más parecidos en FAISS y los usa como contexto.
-WARNING
-
-Pregunta 4: ¿Cómo optimizaste los costos de tokens en la memoria?
-
-Respuesta: Implementé un "Sliding Window" en agent.py:L408. Solo le paso al modelo los últimos 14 mensajes. Esto asegura que el agente siempre tenga contexto reciente sin quemar tokens innecesarios con mensajes muy antiguos.
-4. Notas Extras para la Máxima Calificación (Según Rúbrica)
-UX Profesional: Resalta que tu UI utiliza Glassmorphism y Skeleton loaders (Typing indicators) para una experiencia "premium".
-Escalabilidad: Si te preguntan cómo escalarlo, menciona que el backend es stateless (sin estado propio) y que FAISS podría ser reemplazado por Pinecone o Weaviate en producción para manejar millones de documentos.
-Documentación: No olvides mencionar que el código está 100% en inglés y documentado, cumpliendo con los estándares internacionales de desarrollo de software.
-El RAG principal reside enteramente en el backend, repartido en tres puntos clave:
-
-1. La Lógica de Construcción (Setup)
-Se encuentra en backend/agent.py, dentro de la función setup_rag():
-
-Ubicación: 
-
-agent.py: Líneas 84-109
-.
-Qué hace: Aquí es donde ocurre el scraping de la URL con BeautifulSoup, la división de texto en fragmentos (chunks) y la creación de la base vectorial con FAISS.
-2. La Herramienta de Consulta (Tool)
-Es la tool que el agente decide usar cuando necesita información específica:
-
-Ubicación: 
-
-agent.py: Líneas 181-200
- (Función @tool travel_knowledge).
-Qué hace: Toma la pregunta del usuario, busca en el índice vectorial de FAISS y devuelve los fragmentos de texto más relevantes como contexto para el LLM.
-3. El Disparador (Startup)
-El RAG se construye automáticamente cada vez que enciendes el servidor:
-
-Ubicación: 
-
-main.py: Líneas 41-44
-.
-Qué hace: Llama a setup_rag() en el evento @app.on_event("startup") para asegurar que el conocimiento esté listo para ser consultado.
-Dato clave para tu sustentación: Si quieres cambiar la fuente de conocimiento del RAG, solo tienes que modificar la variable RAG_URL en tu archivo .env.
-
+Este proyecto cumple con los requisitos mínimos y suma puntos extra por:
+- Uso de LangGraph para orquestación de agentes.
+- Implementación completa del pipeline de RAG.
+- Integración de voz y transcripción.
+- Diseño separado y limpio entre frontend y backend.

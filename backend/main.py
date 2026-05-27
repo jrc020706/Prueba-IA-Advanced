@@ -10,6 +10,7 @@ Endpoints:
 import os
 import io
 from dotenv import load_dotenv
+from langdetect import detect_langs, LangDetectException
 
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.responses import StreamingResponse
@@ -107,13 +108,33 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=f"Agent error: {exc}")
 
 
+def detect_text_language(text: str) -> str:
+    """Detect whether the text is primarily Spanish or English."""
+    if not text or not text.strip():
+        return 'es'
+    try:
+        detections = detect_langs(text)
+        if detections:
+            primary = str(detections[0]).split(':')[0]
+            if primary in ('es', 'en'):
+                return primary
+    except (LangDetectException, Exception):
+        pass
+    normalized = text.lower()
+    spanish_markers = ('donde', 'qué', 'que', 'viaje', 'viajar', 'por favor', 'gracias')
+    if any(marker in normalized for marker in spanish_markers):
+        return 'es'
+    return 'en'
+
+
 @app.post("/tts")
 async def text_to_speech(request: TTSRequest):
     """
     Convert text to speech using gTTS (free/no key).
     """
     try:
-        tts = gTTS(text=request.text, lang='es')
+        lang = detect_text_language(request.text)
+        tts = gTTS(text=request.text, lang=lang)
         audio_io = io.BytesIO()
         tts.write_to_fp(audio_io)
         audio_io.seek(0)
