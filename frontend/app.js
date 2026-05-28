@@ -77,6 +77,7 @@ const COMMON_DESTINATIONS = [
   'machu picchu', 'new york', 'nueva york', 'rio de janeiro', 'rio',
   'buenos aires', 'lima', 'cusco', 'cancun', 'cancún', 'mexico', 'méxico',
   'miami', 'panama', 'panamá', 'peru', 'perú', 'chile', 'argentina', 'brasil',
+  'moscu', 'moscú', 'moscow', 'rotterdam',
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -164,26 +165,17 @@ function buildVisualContext(userText, backendDestination = null) {
 
   // If the backend explicitly gave us a destination, we likely want to show SOMETHING.
   const wantsMap = /(mapa|maps|google maps|ubicacion|ubicado|donde queda|donde esta|location|located|where is)/i.test(normalized);
-  const wantsImages = /(imagen|imagenes|foto|fotos|galeria|muestrame|mostrar|images|photos|gallery|show me|visitar|lugares|places|visit)/i.test(normalized);
-
-  // If it's a "places to visit" or similar, show images by default
-  const isGeneralQuery = /(visitar|viaje|lugares|places|visit|trip|travel)/i.test(normalized);
-
   return {
     destination,
     map: wantsMap,
-    images: wantsImages || wantsMap || isGeneralQuery || !!backendDestination,
+    images: true,
   };
 }
 
 function imageSetFor(destination) {
   const normalized = normalizeText(destination);
   if (DESTINATION_IMAGES[normalized]) return DESTINATION_IMAGES[normalized];
-  return [
-    'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1503220317375-aaad61436b1b?auto=format&fit=crop&w=700&q=80',
-    'https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=700&q=80',
-  ];
+  return [];
 }
 
 async function fetchDestinationImages(destination) {
@@ -506,10 +498,10 @@ function appendBotMessage(text, toolUsed, toolName, audioBlob, visualContext = n
   }
 
   if (visualContext?.images) {
-    const images = DESTINATION_IMAGES[normalizeText(visualContext.destination)];
+    const images = imageSetFor(visualContext.destination);
     visualHtml += `
-      <div class="image-gallery ${images ? '' : 'image-gallery-loading'}" aria-label="Travel images for ${escapeHtml(visualContext.destination)}">
-        ${images ? images.map((src, index) => `
+      <div class="image-gallery ${images.length ? '' : 'image-gallery-loading'}" aria-label="Travel images for ${escapeHtml(visualContext.destination)}">
+        ${images.length ? images.map((src, index) => `
           <img src="${src}" alt="${escapeHtml(visualContext.destination)} travel view ${index + 1}" loading="lazy" />
         `).join('') : '<div>Buscando imagenes del destino...</div>'}
       </div>
