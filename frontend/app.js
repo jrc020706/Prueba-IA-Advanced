@@ -160,7 +160,9 @@ function cleanDestinationName(value) {
 
 function buildVisualContext(userText, backendDestination = null) {
   const normalized = normalizeText(userText);
-  const destination = backendDestination ? cleanDestinationName(backendDestination) : extractDestination(userText);
+  const localDestination = extractDestination(userText);
+  const backendCleanDestination = backendDestination ? cleanDestinationName(backendDestination) : null;
+  const destination = localDestination || backendCleanDestination;
   if (!destination) return null;
 
   // If the backend explicitly gave us a destination, we likely want to show SOMETHING.
@@ -175,6 +177,10 @@ function buildVisualContext(userText, backendDestination = null) {
 function imageSetFor(destination) {
   const normalized = normalizeText(destination);
   if (DESTINATION_IMAGES[normalized]) return DESTINATION_IMAGES[normalized];
+  const match = Object.keys(DESTINATION_IMAGES)
+    .sort((a, b) => b.length - a.length)
+    .find(place => normalized.includes(normalizeText(place)));
+  if (match) return DESTINATION_IMAGES[match];
   return [];
 }
 
