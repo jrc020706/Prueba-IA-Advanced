@@ -285,7 +285,7 @@ def _cached_travel_knowledge(query: str) -> str:
     docs = _retry(lambda: _rag_retriever.invoke(query))
     if not docs:
         return "No relevant information found in the knowledge base."
-    return "\n\n---\n\n".join(d.page_content[:900] for d in docs)
+    return "\n\n---\n\n".join(d.page_content[:450] for d in docs)
 
 
 @lru_cache(maxsize=256)
